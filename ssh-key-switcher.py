@@ -1,30 +1,78 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 import argparse
 import os
-import sys
 import shutil
 
 HOME_DIR = os.path.expanduser('~')
 SSH_KEYS_DIR = '%s/.ssh' % HOME_DIR
 KEYS_STORAGE_DIR = '%s/.ssh-key-switcher' % HOME_DIR
+DECORATE_LINE_LENGTH = 10
+DECORATE_LINE_SYMBOL = '-'
+
+DESCRIPTION = """
+Switch keys between accounts for .ssh
+{underline}
+
+Helps to switch between ssh-keys. This tool can keep separated keys inside "{key_storage_dir}".
+
+Example how to use it:
+1. First of all you should create some accounts:
+> ssh-key-switcher make my_keys
+> ssh-key-switcher make company_keys
+
+2. Then identify current keys:
+> ssh-key-switcher current company_keys
+
+This operation will copy your keys from "{ssh_dir}" to "{key_storage_dir}/company_keys"
+
+3. You can switch between keys using:
+> ssh-key-switcher switch my_keys
+or
+> ssh-key-switcher switch company_keys
+
+Enjoy it!
+""".format(key_storage_dir=KEYS_STORAGE_DIR, ssh_dir=SSH_KEYS_DIR, underline='-' * 15)
+
+
+def decorate(sep=None, length=None):
+    if not sep:
+        sep = DECORATE_LINE_SYMBOL
+    if not length and not isinstance(length, int):
+        length = DECORATE_LINE_LENGTH
+
+    return sep * length
+
 
 def basename(f):
-    return f.split('/')[-1]
+    return f.split(os.sep)[-1]
+
+
+def scandir(dir):
+    for _, dirs, _ in os.walk(dir):
+        return dirs
+
 
 def init():
+    d = scandir(KEYS_STORAGE_DIR)
     if all([os.path.exists(KEYS_STORAGE_DIR), os.path.isdir(KEYS_STORAGE_DIR)]):
         return True
-    os.makedirs(KEYS_STORAGE_DIR, exist_ok=False)
+    os.makedirs(KEYS_STORAGE_DIR)
     return True
 
 
 def list_accounts(args):
-    dirs = [basename(f.path) for f in os.scandir(KEYS_STORAGE_DIR) if f.is_dir()]
+    dirs = scandir(KEYS_STORAGE_DIR)
     if not dirs:
         print("There are not any accounts")
     else:
-        for dir in dirs:
-            print(dir)
+        print("You have the next accounts:")
+        print(decorate())
+        current = read_current_account()
+        for d in dirs:
+            sep = '-'
+            if d == current:
+                sep = '*'
+            print('{sep} {dir}'.format(sep=sep, dir=d))
 
 
 def make_account(args):
@@ -33,9 +81,6 @@ def make_account(args):
         os.mkdir(name)
     return name
 
-def help(args):
-    print("Switch keys between accounts for .ssh")
-
 
 def write_current_account(account):
     file_name = '%s/.current' % KEYS_STORAGE_DIR
@@ -43,12 +88,18 @@ def write_current_account(account):
     f.write(account)
     f.close()
 
+
 def read_current_account():
-    file_name = '%s/.current' % KEYS_STORAGE_DIR
-    f = open(file_name)
-    account  =f.readline()
-    f.close()
+    account = None
+    try:
+        file_name = '%s/.current' % KEYS_STORAGE_DIR
+        f = open(file_name)
+        account = f.readline()
+        f.close()
+    except:
+        pass
     return account
+
 
 def copy_keys(fr, to):
     for _, _, files in os.walk(fr):
@@ -72,6 +123,7 @@ def remove_files(directory):
         for f in files:
             os.remove('%s/%s' %(directory, f))
 
+
 def switch_accounts(args):
     from_account = read_current_account()
     to_account = args.name
@@ -82,27 +134,18 @@ def switch_accounts(args):
     write_current_account(to_account)
 
 
-def parse_args():
-    """Настройка argparse"""
-    parser = argparse.ArgumentParser(description='User database utility')
+def parse_args(parser):
     subparsers = parser.add_subparsers()
     subparsers.required = True
-
-    parser_help = subparsers.add_parser('help', help='Help of the command')
-    parser_help.set_defaults(func=help)
 
     parser_list = subparsers.add_parser('list', help='List accounts')
     parser_list.set_defaults(func=list_accounts)
 
-    parser_make = subparsers.add_parser('make', help='List accounts')
-    parser_make.add_argument('name', help='Name of new account')
+    parser_make = subparsers.add_parser('create', help='Create a new account')
+    parser_make.add_argument('name', help='Name for new account')
     parser_make.set_defaults(func=make_account)
 
-    parser_make = subparsers.add_parser('make', help='List accounts')
-    parser_make.add_argument('name', help='Name of new account')
-    parser_make.set_defaults(func=make_account)
-
-    parser_set_current = subparsers.add_parser('current', help='Set a current account')
+    parser_set_current = subparsers.add_parser('current', help='Set existing account as current')
     parser_set_current.add_argument('name', help='Name of the account')
     parser_set_current.set_defaults(func=set_current)
 
@@ -115,8 +158,15 @@ def parse_args():
 
 def main():
     init()
-    args = parse_args()
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawTextHelpFormatter)
+    args = parse_args(parser)
+
     args.func(args)
 
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except OSError as e:
+        print(e.message)
+        exit(1)
