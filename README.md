@@ -22,11 +22,11 @@ whenever you want*
 
 `$ wget https://raw.githubusercontent.com/alexshin/ssh-key-switcher/master/ssh-key-switcher.py`
 
-- Copy it to directory existing in $PATH
+- Copy it to directory from $PATH
 
 `$ cp ./ssh-key-switcher.py /usr/local/bin/ssh-key-switcher`
 
-- Ensure that util has permissions to execute:
+- Ensure that your user have permissions to execute the script:
 
 `$ chmod u+x /usr/local/bin/ssh-key-switcher`
 
