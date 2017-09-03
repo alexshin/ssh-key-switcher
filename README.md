@@ -20,7 +20,7 @@ whenever you want*
 
 - Download [the latest version of util](https://github.com/alexshin/ssh-key-switcher/blob/master/ssh-key-switcher.py)
 
-`$ wget https://github.com/alexshin/ssh-key-switcher/blob/master/ssh-key-switcher.py`
+`$ wget https://raw.githubusercontent.com/alexshin/ssh-key-switcher/master/ssh-key-switcher.py`
 
 - Copy it to directory existing in $PATH
 
