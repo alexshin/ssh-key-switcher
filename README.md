@@ -11,8 +11,8 @@ This little script helps you to keep various keys and switch between them.
 
 ## Requirements
 
-- Python2.7 or never
-- Writeable your home directory "~"
+- Python2.7 or newer
+- Writeable home directory "~"
 - Standard path with .ssh keys ("~/.ssh") - *you can fork and modify it 
 whenever you want*
 
@@ -33,4 +33,4 @@ whenever you want*
 
 ## How to use it
 
-Type: `$ ssh-key-switcher --help` to give detailed examples
+Type: `$ ssh-key-switcher --help` to give you detailed examples
